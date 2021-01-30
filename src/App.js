@@ -1,23 +1,17 @@
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+
+import { ServerSelector } from "./components/ServerSelector";
+import { ChannelSelector } from "./components/ChannelSelector";
+import { MessageContainer } from "./components/MessageContainer";
+
+// style from https://codepen.io/adamwathan/pen/JOQWVa
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="font-sans antialiased h-screen flex">
+      <ServerSelector />
+      <ChannelSelector />
+      <MessageContainer />
     </div>
   );
 }

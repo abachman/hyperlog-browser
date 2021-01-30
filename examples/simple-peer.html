@@ -1,0 +1,37 @@
+<script src="simplepeer.js"></script>
+<script>
+  var peer1 = new SimplePeer({
+    initiator: true,
+    iceCompleteTimeout: 30 * 1000,
+  });
+  var peer2 = new SimplePeer({
+    config: { relay: true },
+    iceCompleteTimeout: 30 * 1000,
+  });
+
+  peer1.on("signal", (data) => {
+    console.log("p1 sig", data);
+
+    // when peer1 has signaling data, give it to peer2 somehow
+    peer2.signal(data);
+  });
+
+  peer2.on("signal", (data) => {
+    console.log("p2 sig", data);
+
+    // when peer2 has signaling data, give it to peer1 somehow
+    peer1.signal(data);
+  });
+
+  peer1.on("connect", () => {
+    console.log("p1 connect!");
+
+    // wait for 'connect' event before using the data channel
+    peer1.send("hey peer2, how is it going?");
+  });
+
+  peer2.on("data", (data) => {
+    // got a data channel message
+    console.log("p2 got a message from peer1: " + data);
+  });
+</script>

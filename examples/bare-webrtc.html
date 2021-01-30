@@ -1,0 +1,51 @@
+<script>
+  var peer1 = new RTCPeerConnection({
+    iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+    ],
+  });
+  var peer2 = new RTCPeerConnection({
+    iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+    ],
+  });
+  var channel1 = peer1.createDataChannel("data");
+  var channel2 = peer2.createDataChannel("data");
+  var waiting_for = 2;
+
+  function ready() {
+    console.log("ready");
+    --waiting_for;
+    if (!waiting_for) {
+      peer1.getStats().then(function (stats) {
+        var stats_data = Array.from(stats.values());
+        console.log(JSON.stringify([stats.toString(), stats_data]));
+      });
+    }
+  }
+
+  channel1.onopen = ready;
+  channel2.onopen = ready;
+
+  peer1
+    .createOffer()
+    .then(function (offer) {
+      console.log("p1 set local with offer", offer);
+      return peer1.setLocalDescription(offer);
+    })
+    .then(function () {
+      console.log("p2 set remote", peer1.localDescription);
+      peer2.setRemoteDescription(peer1.localDescription);
+      return peer2.createAnswer();
+    })
+    .then(function (answer) {
+      console.log("p2 set local", answer);
+      return peer2.setLocalDescription(answer);
+    })
+    .then(function () {
+      console.log("p1 set remote", peer2.localDescription);
+      peer1.setRemoteDescription(peer2.localDescription);
+    });
+</script>
