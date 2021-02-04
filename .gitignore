@@ -19,6 +19,7 @@ Makefile
 .env.test.local
 .env.production.local
 *.data/
+.eslintcache
 
 npm-debug.log*
 yarn-debug.log*
