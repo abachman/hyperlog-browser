@@ -1,8 +1,9 @@
 import levelup from "levelup";
-import leveljs from "level-js";
+// import leveljs from "level-js";
+import memdown from "memdown";
+import subleveldown from "subleveldown";
 import cuid from "cuid";
 import { Swarm } from "../swarm";
-import { client } from "./websocket";
 import { configureStore, getDefaultMiddleware } from "@reduxjs/toolkit";
 import { createLogger } from "redux-logger";
 import {
@@ -15,8 +16,9 @@ import {
 } from "./slices";
 import * as idb from "idb-keyval";
 
-export const db = levelup(leveljs("client"));
 export const clientid = cuid();
+const maindb = levelup(memdown());
+export const db = subleveldown(maindb, `chat-${clientid}`);
 
 const reducer = {
   messages: messagesReducer,
@@ -56,11 +58,6 @@ const store = configureStore({
   },
   reducer,
   middleware: middlewares,
-  // (getDefaultMiddleware) => {
-  //   const mid = getDefaultMiddleware().concat(logger);
-  //   console.log(mid);
-  //   return mid;
-  // },
   devTools: process.env.NODE_ENV !== "production",
 });
 
@@ -76,9 +73,7 @@ idb.get("client.username").then((value) => {
 
 // ----- replication
 
-const swarm = new Swarm(db, client, clientid);
-
-swarm.on("ready", () => {});
+const swarm = new Swarm(db, "http://house.chat:8080/signal");
 
 swarm.on("message", (message) => {
   console.log("got new message", message);

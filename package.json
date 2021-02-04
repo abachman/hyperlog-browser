@@ -32,7 +32,8 @@
     "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.0.2",
     "through2": "^4.0.2",
     "transform-loader": "^0.2.4",
-    "web-vitals": "^0.2.4"
+    "web-vitals": "^0.2.4",
+    "webrtc-mesh": "abachman/webrtc-mesh#main"
   },
   "scripts": {
     "start": "PORT=3001 craco start",

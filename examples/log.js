@@ -9,39 +9,12 @@ const through = require("through2");
 const schema = protobuf(`
   message Message {
     optional string username = 1;
-    optional string channel = 2;
-    optional uint64 timestamp = 3;
-    optional string text = 4;
+    optional string text = 2;
   }
 `);
 
-// const dba = levelup(leveldown("./dba.data"));
-// const dbb = levelup(leveldown("./dbb.data"));
-const dba = levelup(memdown());
-const dbb = levelup(memdown());
-
-// dba
-//   .createReadStream()
-//   .on("data a", function (data) {
-//     console.log(data.key, "=", data.value);
-//   })
-//   .on("end", function () {
-//     console.log("a end");
-//   });
-//
-// dbb
-//   .createReadStream()
-//   .on("data b", function (data) {
-//     console.log(data.key, "=", data.value);
-//   })
-//   .on("end", function () {
-//     console.log("b end");
-//   });
-const log = hyperlog(subleveldown(dba, "swarm"));
-const clone = hyperlog(subleveldown(dbb, "swarm"));
-
 class Client {
-  constructor(username, db, log) {
+  constructor(username, log) {
     this.username = username;
     this.messages = [];
     this.log = log;
@@ -55,9 +28,7 @@ class Client {
   encode(message) {
     return schema.Message.encode({
       username: this.username,
-      channel: "sample",
       text: message,
-      timestamp: Date.now(),
     });
   }
 
@@ -67,7 +38,6 @@ class Client {
 
   replicate(peer) {
     const stream = this.replicationStream();
-    // const right = other.log.replicate({ mode: "sync", live: true });
 
     stream.on("push", () => {
       this.counts.push++;
@@ -102,7 +72,6 @@ class Client {
               // msg
             );
             fn(msg, cb);
-            // this.messages.push(msg);
           } catch (ex) {
             console.error("----> failed to decode", msg.toString(), ex.message);
           }
@@ -114,48 +83,79 @@ class Client {
   send(message) {
     return new Promise((resolve) => {
       const m = this.encode(message);
-      // this.messages.push(schema.Message.decode(m));
-      this.log.heads((err, heads) => {
+      this.log.heads((_err, heads) => {
         this.log.add(heads, m, resolve);
       });
     });
   }
 }
 
-const a = new Client("a", dba, log);
-const b = new Client("b", dbb, clone);
+const db = levelup(memdown());
+
+const la = hyperlog(subleveldown(db, "loga"));
+const lb = hyperlog(subleveldown(db, "logb"));
+const lc = hyperlog(subleveldown(db, "logc"));
+const ld = hyperlog(subleveldown(db, "logd"));
+
+const a = new Client("a", la);
+const b = new Client("b", lb);
+const c = new Client("c", lc);
+const d = new Client("d", ld);
 
 a.replicate(b.replicationStream());
+a.replicate(c.replicationStream());
+a.replicate(d.replicationStream());
 
-b.process((message, cb) => {
-  console.log("< b got", message);
-  b.messages.push(message);
+a.process((message, cb) => a.messages.push(message) && cb());
+b.process((message, cb) => b.messages.push(message) && cb());
+c.process((message, cb) => c.messages.push(message) && cb());
+d.process((message, cb) => d.messages.push(message) && cb());
 
-  cb();
-});
+async function delayed(cb, to) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      cb();
+      resolve();
+    }, to);
+  });
+}
 
-a.process((message, cb) => {
-  console.log("< a got", message);
-  a.messages.push(message);
-
-  cb();
-});
-
-function start() {
-  setTimeout(async () => {
-    await a.send("hello");
+async function start() {
+  await delayed(async () => {
+    await a.send("a:1");
     console.log("> a sent");
-  }, 1);
+  }, 1000);
 
-  setTimeout(async () => {
-    await b.send("greetings");
+  await delayed(async () => {
+    await b.send("b:1");
     console.log("> b sent");
-  }, 50);
+  }, 1000);
 
-  setTimeout(() => {
+  await delayed(async () => {
+    await a.send("a:2");
+    console.log("> a sent");
+  }, 1000);
+
+  await delayed(async () => {
+    await a.send("a:3");
+    console.log("> a sent");
+  }, 1000);
+
+  await delayed(async () => {
+    await c.send("c:1");
+    console.log("> c sent");
+  }, 1000);
+
+  await delayed(() => {
+    console.log("-------------------------------");
     console.log("a", a.messages);
+    console.log("-------------------------------");
     console.log("b", b.messages);
-  }, 100);
+    console.log("-------------------------------");
+    console.log("c", c.messages);
+    console.log("-------------------------------");
+    console.log("d", d.messages);
+  }, 1000);
 }
 
 start();
