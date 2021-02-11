@@ -1,5 +1,5 @@
 const hyperlog = require("hyperlog");
-const leveldown = require("leveldown");
+// const leveldown = require("leveldown");
 const memdown = require("memdown");
 const levelup = require("levelup");
 const subleveldown = require("subleveldown");

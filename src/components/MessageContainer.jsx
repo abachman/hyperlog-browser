@@ -11,7 +11,7 @@ export const MessageContainer = () => {
           <div className="text-grey-dark text-sm truncate">memes and gags</div>
         </div>
         <div className="ml-auto hidden md:block">
-          <div className="relative">
+          <div className="hidden relative">
             <input
               type="search"
               placeholder="Search"

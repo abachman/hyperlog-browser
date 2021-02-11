@@ -1,7 +1,8 @@
-import { useLayoutEffect, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { userActions } from "../system/slices";
-import { isEqual } from "lodash";
+import { useLayoutEffect, useRef, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { userActions } from '../system/slices'
+import { Friends } from './Friends'
+import { ResetButton } from './ResetButton'
 
 const Bell = () => {
   return (
@@ -14,8 +15,8 @@ const Bell = () => {
         fillRule="evenodd"
       />
     </svg>
-  );
-};
+  )
+}
 
 const Plus = () => {
   return (
@@ -26,56 +27,61 @@ const Plus = () => {
     >
       <path d="M11 9h4v2h-4v4H9v-4H5V9h4V5h2v4zm-1 11a10 10 0 1 1 0-20 10 10 0 0 1 0 20zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16z" />
     </svg>
-  );
-};
+  )
+}
 
 const Username = () => {
-  const user = useSelector((state) => state.user);
-  const dispatch = useDispatch();
+  const user = useSelector((state) => state.user)
+  const dispatch = useDispatch()
 
-  const [editing, setEditing] = useState(false);
-  const [nameValue, setNameValue] = useState(user.username);
-  const input = useRef();
+  const [editing, setEditing] = useState(false)
+  const [nameValue, setNameValue] = useState(user.username)
+  const input = useRef()
 
   useLayoutEffect(() => {
     if (editing) {
-      input.current.focus();
-      input.current.select();
+      input.current.focus()
+      input.current.select()
     }
-  }, [editing]);
+  }, [editing])
 
   if (editing) {
     return (
       <input
-        className="text-black text-sm"
+        className="text-black text-base"
         value={nameValue}
         ref={input}
+        onBlur={() => setEditing(false)}
         onInput={(evt) => setNameValue(evt.currentTarget.value)}
         onKeyPress={(evt) => {
-          if (evt.key === "Enter") {
-            dispatch(userActions.setUsername(nameValue));
-            setEditing(false);
-          } else if (evt.key === "Esc") {
-            setEditing(false);
+          if (evt.key === 'Enter') {
+            dispatch(userActions.set({ username: nameValue, id: user.id }))
+            setEditing(false)
+          } else if (evt.key === 'Esc') {
+            setEditing(false)
           }
         }}
       />
-    );
+    )
   }
+
   return (
-    <span
-      onClick={() => setEditing(true)}
-      className="text-white opacity-50 text-sm"
-    >
-      {user.username}
-    </span>
-  );
-};
+    <div className="text-base">
+      You are{' '}
+      <span
+        role="button"
+        tabIndex={0}
+        onClick={() => setEditing(true)}
+        onKeyDown={() => setEditing(true)}
+        className="text-yellow-300"
+      >
+        {user.username || '!!!'}
+      </span>
+    </div>
+  )
+}
 
 export const ChannelSelector = () => {
-  const peers = useSelector((state) => Object.values(state.peers), isEqual);
-  const user = useSelector((state) => state.user || {}, isEqual);
-
   return (
     <div className="bg-indigo-700 text-purple-300 flex-none w-64 pb-6 hidden md:block">
       <div className="text-white mb-2 mt-3 px-4 flex justify-between">
@@ -84,58 +90,27 @@ export const ChannelSelector = () => {
             house.chat
           </h1>
           <div className="flex items-center mb-6">
-            <svg
-              className="h-2 w-2 fill-current text-green mr-2"
-              viewBox="0 0 20 20"
-            >
-              <circle cx="10" cy="10" r="10" />
-            </svg>
             <Username />
           </div>
         </div>
-        <div>
+        <div className="hidden">
           <Bell />
         </div>
       </div>
+
       <div className="mb-8">
         <div className="px-4 mb-2 text-white flex justify-between items-center">
           <div className="opacity-75">Channels</div>
-          <div>
+          <div className="hidden">
             <Plus />
           </div>
         </div>
         <div className="bg-teal-600 py-1 px-4 text-white"># general</div>
       </div>
-      <div className="mb-8">
-        <div className="px-4 mb-2 text-white flex justify-between items-center">
-          <div className="opacity-75">Friends</div>
-          <div>
-            <Plus />
-          </div>
-        </div>
-        <div className="flex items-center mb-3 px-4">
-          <svg
-            className="h-2 w-2 fill-current text-green-600 mr-2"
-            viewBox="0 0 20 20"
-          >
-            <circle cx="10" cy="10" r="10" />
-          </svg>
-          <span className="text-white opacity-75">
-            {user.username} <span className="text-grey text-sm">(you)</span>
-          </span>
-        </div>
-        {peers.map((peer, idx) => (
-          <div key={idx} className="flex items-center mb-3 px-4">
-            <svg
-              className="h-2 w-2 fill-current text-green-600 mr-2"
-              viewBox="0 0 20 20"
-            >
-              <circle cx="10" cy="10" r="10" />
-            </svg>
-            <span className="text-white opacity-75">{peer.id}</span>
-          </div>
-        ))}
-      </div>
+
+      <Friends />
+
+      <ResetButton />
     </div>
-  );
-};
+  )
+}

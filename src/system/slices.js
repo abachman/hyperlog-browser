@@ -1,61 +1,132 @@
-import { createSlice } from "@reduxjs/toolkit";
+import cuid from 'cuid'
+import { createSlice } from '@reduxjs/toolkit'
+
+//--[ messages ]----------------------------------------------------
 
 const messageState = {
-  messages: [],
-};
+  messages: {},
+}
 
+/*
+message Message {
+  optional uint64 timestamp = 1;
+  optional string text = 2;
+  optional string username = 3;
+  optional string uid = 4;
+  optional string pid = 5
+}
+*/
 const messages = createSlice({
-  name: "messages",
+  name: 'messages',
   initialState: messageState,
   reducers: {
+    // action.payload: Message
     add(state, action) {
-      state.messages.push(action.payload);
+      const { timestamp, uid, text, username } = action.payload
+
+      const existing = Object.values(state.messages).sort()
+      const last = existing[existing.length - 1]
+      if (last && last.uid === uid && last.username === username) {
+        last.text = last.text + `\n${text}`
+        state.messages[last.key] = last
+      } else {
+        const key = `${timestamp}${uid}`
+        const message = {
+          key,
+          ...action.payload,
+        }
+        state.messages[key] = message
+      }
     },
   },
-});
+})
 
-export const messagesReducer = messages.reducer;
-export const messagesActions = messages.actions;
+export const messagesReducer = messages.reducer
+export const messagesActions = messages.actions
 
-//------------------------------------------------------
+//--[ peers ]----------------------------------------------------
 
 const peerState = {
-  peers: {},
-};
+  peers: {}, // { [id: string]: { id: string, username: string } }
+}
 
 const peers = createSlice({
-  name: "peers",
+  name: 'peers',
   initialState: peerState,
   reducers: {
     add(state, action) {
-      state.peers[action.id] = action.peer;
+      const { id } = action.payload
+      state.peers[id] = {
+        id: id,
+        username: 'anon',
+      }
     },
 
     remove(state, action) {
-      delete state.peers[action.id];
+      const { id } = action.payload
+      delete state.peers[id]
     },
   },
-});
 
-export const peersReducer = peers.reducer;
-export const peersActions = peers.actions;
+  extraReducers: (builder) => {
+    builder.addCase(messagesActions.add.type, (state, action) => {
+      const message = action.payload
+      if (state.peers[message.pid]) {
+        state.peers[message.pid].username = message.username
+      }
+    })
+  },
+})
 
-//------------------------------------------------------
+export const peersReducer = peers.reducer
+export const peersActions = peers.actions
+
+//--[ everything ]---------------------------------------------
+
+const data = createSlice({
+  name: 'data',
+  initialState: {},
+  reducers: {
+    reset(state) {
+      return state
+    },
+  },
+})
+
+export const dataActions = data.actions
+
+//--[ local user ]---------------------------------------------
 
 const userState = {
-  username: "",
-  uid: "",
-};
+  username: '',
+  id: '',
+  reset: false,
+}
 
 const user = createSlice({
-  name: "user",
+  name: 'user',
   initialState: userState,
   reducers: {
-    setUsername(state, action) {
-      state.username = action.payload;
+    // payload { username, id }
+    set(state, action) {
+      return {
+        ...state,
+        ...action.payload,
+      }
+    },
+
+    clean(state) {
+      state.reset = false
     },
   },
-});
 
-export const userReducer = user.reducer;
-export const userActions = user.actions;
+  extraReducers: (builder) => {
+    builder.addCase(dataActions.reset, (state) => {
+      const id = cuid()
+      return { id, username: id, reset: true }
+    })
+  },
+})
+
+export const userReducer = user.reducer
+export const userActions = user.actions

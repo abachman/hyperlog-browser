@@ -1,7 +1,9 @@
-import React, { useLayoutEffect, useRef } from "react";
-import { useSelector } from "react-redux";
+import React, { useEffect, useRef } from 'react'
+import { useSelector } from 'react-redux'
 
-const Message = React.memo(({ message }) => {
+const Message = React.memo(({ mid }) => {
+  const message = useSelector((state) => state.messages.messages[mid])
+  const lines = message.text.split('\n')
   return (
     <div className="flex items-start mb-4 text-sm">
       <div className="w-10 h-10 text-blue-400 rounded mr-3">[ P ]</div>
@@ -14,30 +16,41 @@ const Message = React.memo(({ message }) => {
             {new Date(message.timestamp).toLocaleString()}
           </span>
         </div>
-        <p className="text-black leading-normal">{message.text}</p>
+        {lines.length === 1 ? (
+          <p className="text-black leading-normal">{message.text}</p>
+        ) : (
+          <>
+            {lines.map((line, idx) => (
+              <p key={idx} className="text-black leading-normal">
+                {line}
+              </p>
+            ))}
+          </>
+        )}
       </div>
     </div>
-  );
-});
+  )
+})
 
 export const Messages = () => {
-  const messages = useSelector((state) => state.messages.messages);
-  const lastlen = useRef(messages.length);
-  const container = useRef();
+  const messageIds = useSelector((state) =>
+    Object.keys(state.messages.messages).sort()
+  )
+  const lastlen = useRef(messageIds.length)
+  const container = useRef()
 
-  useLayoutEffect(() => {
-    if (container.current && messages.length > lastlen.current) {
-      container.current.scrollTo(0, container.current.scrollHeight);
-      lastlen.current = messages.length;
+  useEffect(() => {
+    if (container.current) {
+      container.current.scrollTo(0, container.current.scrollHeight)
+      lastlen.current = messageIds.length
     }
-  }, [messages, container]);
+  }, [messageIds, container])
 
   return (
     <div ref={container} className="px-6 py-4 flex-1 overflow-y-scroll">
-      {/* <!-- A message --> */}
-      {messages.map((msg, idx) => (
-        <Message message={msg} key={idx} />
+      {messageIds.map((mid) => (
+        <Message mid={mid} key={mid} />
       ))}
     </div>
-  );
-};
+  )
+}
