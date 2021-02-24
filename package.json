@@ -31,6 +31,7 @@
     "simple-peer": "^9.9.3",
     "subleveldown": "^5.0.1",
     "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.0.2",
+    "tauri": "^0.14.1",
     "through2": "^4.0.2",
     "transform-loader": "^0.2.4",
     "web-vitals": "^0.2.4",
@@ -39,6 +40,7 @@
   "scripts": {
     "start": "PORT=3001 craco start",
     "build": "craco build",
+    "tauri": "tauri",
     "test": "craco test",
     "eject": "react-scripts eject"
   },
